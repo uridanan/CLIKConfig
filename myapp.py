@@ -5,20 +5,21 @@ import json
 import six
 import platform
 from PySide2.QtWidgets import (QLabel, QLineEdit, QPushButton, QApplication, QVBoxLayout, QHBoxLayout, QDialog,
-                               QMessageBox, QFileDialog)
+                               QMessageBox, QFileDialog, QFormLayout)
 
-# TODO: GP - AppsFlyer does not need apple app ID
-# TODO: GP - Add toggle iOS / Android
 # TODO: GP - Add bundle ID
 # TODO: GP - Add test: True/False
 # TODO: GP - Add hockeyApp key
 # TODO: GP - Add level to first popup and first popup at session
 # TODO: GP - Add privacy settings
+# TODO: GP - AppsFlyer does not need general app ID
+# TODO: GP - Add toggle iOS / Android
 # TODO: MacOS - control the output folder?
 # TODO: MacOS - why can't the noconsole option write the files?
 # TODO: Separate fields into sections
 # TODO: Use Int field and bool toggles
 # TODO: add to CL HC Product github
+# TODO: create 2 button toggle
 
 
 class ApplicationFolder:
@@ -99,7 +100,7 @@ class ConfigFile:
         pass
 
     def getArchiveName(self):
-        return "CLIKConfig-" + self.params.apple.appId
+        return "CLIKConfig-" + self.params.general.appId
 
     def getTargetDir(self):
         path = ApplicationFolder.get_full_path(self.getArchiveName())
@@ -134,7 +135,7 @@ class Global(ConfigFile):
         cfg = {
                 "store": "apple",
                 "gameEngine": "unity",
-                "appId": self.params.apple.appId,
+                "appId": self.params.general.appId,
                 "audienceModeBuildOnly": "non-children",
                 "orientation": "portrait",
                 "appBuildConfig": {
@@ -158,14 +159,14 @@ class AppsFlyer(ConfigFile):
     def getConfig(self):
         return {
                 "appsFlyerKey": "8MAzUC3B2BHYVi2uYVHaSd",
-                "appsFlyerAppId": self.params.apple.appId
+                "appsFlyerAppId": self.params.general.appId
             }
 
     def getFileName(self):
         return "apsflyer.json"
 
     def extract(self, data):
-        self.params.apple.appId = data["appsFlyerAppId"]
+        self.params.general.appId = data["appsFlyerAppId"]
 
 
 class Analytics(ConfigFile):
@@ -277,15 +278,17 @@ class PopupsMgr(ConfigFile):
 class Params:
     def __init__(self):
         self.path = None
-        self.apple = Apple()
+        self.general = General()
         self.admob = Admob()
         self.firebase = Firebase()
         self.popups = Popups()
 
 
-class Apple:
+class General:
     def __init__(self):
         self.appId = ""
+        self.bundleId = ""
+        self.useTestKeys = False
 
 
 class Admob:
@@ -326,6 +329,29 @@ class Popups:
 
 
 # Could have used PySide.QtGui.QFormLayout.addRow() or QGridLayout
+# layout = QFormLayout()
+# layout.addRow("Toggle: ", Toggle(ToggleState("green", "ON"), ToggleState("red", "OFF"), True).getWidget())
+# layout.addRow(self.appleId.getLabel(), self.appleId.getLayout())
+
+class LabelledWidget:
+    def __init__(self, label, widget):
+        self.label = QLabel(label)
+        self.widget = widget
+        self.layout = QHBoxLayout()
+        self.layout.addWidget(self.label)
+        self.layout.addWidget(self.widget)
+
+    def getLabel(self):
+        return self.label
+
+    def getLayout(self):
+        return self.layout
+
+    def getWidget(self):
+        return self.widget
+
+
+# TODO: inherit from LabelledWidget
 class LabelledInput:
     def __init__(self, label, default=""):
         self.label = QLabel(label)
@@ -333,6 +359,9 @@ class LabelledInput:
         self.layout = QHBoxLayout()
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.value)
+
+    def getLabel(self):
+        return self.label
 
     def getLayout(self):
         return self.layout
@@ -344,6 +373,45 @@ class LabelledInput:
         if isinstance(value, six.string_types):
             self.value.setText(value)
 
+class ToggleState:
+    def __init__(self, color, text):
+        self.color = color
+        self.text = text
+
+class Toggle:
+    def __init__(self, checked_state, unchecked_state, is_default_checked):
+
+        self.checked_state = checked_state
+        self.unchecked_state = unchecked_state
+
+        # Select default state
+        self.default_state = unchecked_state
+        if is_default_checked:
+            self.default_state = checked_state
+
+        self.widget = QPushButton(self.default_state.text)
+        self.widget.setFixedWidth(50)
+        self.widget.setFixedHeight(20)
+        self.widget.setCheckable(True)
+        self.widget.setStyleSheet("QPushButton{background-color: " + unchecked_state.color + ";} \
+               QPushButton{background-color: " + unchecked_state.color + ";} \
+               QPushButton{font-weight: bold;} \
+               QPushButton{border: none;} \
+               QPushButton:checked{background-color: " + checked_state.color + ";} \
+               QPushButton:focus{border:none; }")
+        self.widget.setChecked(is_default_checked)
+        self.widget.toggled.connect(lambda:self.onToggle(self.widget))
+        self.widget.isChecked()
+
+    def getWidget(self):
+        return self.widget
+
+    def onToggle(self, instance):
+        text = self.unchecked_state.text
+        if instance.isChecked():
+            text = self.checked_state.text
+        instance.setText(text)
+
 
 class Form(QDialog):
 
@@ -353,7 +421,11 @@ class Form(QDialog):
 
         # Create widgets
         self.load = QPushButton("Load")
+        self.bundleId = LabelledInput("Bundle Id")
+        self.useTestKeys = LabelledWidget("Use Test Keys",
+                        Toggle(ToggleState("blue", "YES"), ToggleState("green", "NO"), False).getWidget())
         self.appleId = LabelledInput("Apple App Id")
+        self.testMode = LabelledInput("Using Test Keys")
         self.firebaseId = LabelledInput("Firebase App Id")
         self.firebaseClientId = LabelledInput("Firebase Client Id")
         self.firebaseProjectId = LabelledInput("Firebase Project Id")
@@ -365,7 +437,7 @@ class Form(QDialog):
         self.popupsInterval = LabelledInput("Time Between Popups (sec)", "25")
         self.popupsGameTime = LabelledInput("Game time to first popup (sec)", "25")
         self.popupsSessionTime = LabelledInput("Session time to first popup (sec)", "15")
-        self.popupsResetOnRV = LabelledInput("Reset on RV", "False")
+        self.popupsResetOnRV = LabelledWidget("Reset on RV", Toggle(ToggleState("blue", "YES"), ToggleState("green", "NO"), False).getWidget())
         self.save = QPushButton("Save")
 
         # Set dialog layout
@@ -374,7 +446,9 @@ class Form(QDialog):
         # Load Button
         layout.addWidget(self.load)
 
-        # Apple
+        # General
+        layout.addLayout(self.bundleId.getLayout())
+        layout.addLayout(self.useTestKeys.getLayout())
         layout.addLayout(self.appleId.getLayout())
 
         # Firebase
@@ -430,7 +504,9 @@ class Form(QDialog):
         return params
 
     def showConfig(self, params):
-        self.appleId.setValue(params.apple.appId)
+        self.bundleId.setValue(params.general.bundleId)
+        self.useTestKeys.setChecked(params.general.useTestKeys)
+        self.appleId.setValue(params.general.appId)
         self.firebaseId.setValue(params.firebase.appId)
         self.firebaseClientId.setValue(params.firebase.clientId)
         self.firebaseProjectId.setValue(params.firebase.projectId)
@@ -442,11 +518,13 @@ class Form(QDialog):
         self.popupsInterval.setValue(params.popups.timeBetween)
         self.popupsGameTime.setValue(params.popups.gameTime)
         self.popupsSessionTime.setValue(params.popups.sessionTime)
-        self.popupsResetOnRV.setValue(params.popups.resetOnRV)
+        self.popupsResetOnRV.getWidget.setChecked(params.popups.resetOnRV)
 
     def collectInput(self):
         p = Params()
-        p.apple.appId = self.appleId.getValue()
+        p.general.bundleId = self.appleId.getValue()
+        p.general.useTestKeys = self.useTestKeys.getWidget().isChecked()
+        p.general.appId = self.appleId.getValue()
         p.firebase.appId = self.firebaseId.getValue()
         p.firebase.clientId = self.firebaseClientId.getValue()
         p.firebase.projectId = self.firebaseProjectId.getValue()
@@ -458,7 +536,7 @@ class Form(QDialog):
         p.popups.setTimeBetween(self.popupsInterval.getValue())
         p.popups.setGameTime(self.popupsGameTime.getValue())
         p.popups.setSessionTime(self.popupsSessionTime.getValue())
-        p.popups.setResetOnRV(self.popupsResetOnRV.getValue())
+        p.popups.setResetOnRV(self.popupsResetOnRV.getWidget().isChecked())
         return p
 
     def saveConfig(self, params):
@@ -470,7 +548,7 @@ class Form(QDialog):
         Interstitials(params).save()
         RewardedAds(params).save()
         PopupsMgr(params).save()
-        Zipper(params.apple.appId).zipdir()
+        Zipper(params.general.appId).zipdir()
 
 
 if __name__ == '__main__':
