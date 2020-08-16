@@ -4,20 +4,22 @@ import zipfile
 import json
 import six
 import platform
-from PySide2.QtWidgets import (QLabel, QLineEdit, QPushButton, QApplication, QVBoxLayout, QHBoxLayout, QDialog, QMessageBox, QFileDialog)
+from PySide2.QtWidgets import (QLabel, QLineEdit, QPushButton, QApplication, QVBoxLayout, QHBoxLayout, QDialog,
+                               QMessageBox, QFileDialog)
 
-#TODO: GP - AppsFlyer does not need apple app ID
-#TODO: GP - Add toggle iOS / Android
-#TODO: GP - Add bundle ID
-#TODO: GP - Add test: True/False
-#TODO: GP - Add hockeyApp key
-#TODO: GP - Add level to first popup and first popup at session
-#TODO: GP - Add privacy settings
-#TODO: MacOS - control the output folder?
-#TODO: MacOS - why can't the noconsole option write the files?
-#TODO: Separate fields into sections
-#TODO: Use Int field and bool toggles
-#TODO: add to CL HC Product github
+# TODO: GP - AppsFlyer does not need apple app ID
+# TODO: GP - Add toggle iOS / Android
+# TODO: GP - Add bundle ID
+# TODO: GP - Add test: True/False
+# TODO: GP - Add hockeyApp key
+# TODO: GP - Add level to first popup and first popup at session
+# TODO: GP - Add privacy settings
+# TODO: MacOS - control the output folder?
+# TODO: MacOS - why can't the noconsole option write the files?
+# TODO: Separate fields into sections
+# TODO: Use Int field and bool toggles
+# TODO: add to CL HC Product github
+
 
 class ApplicationFolder:
     MACOS = 'Darwin'
@@ -30,7 +32,7 @@ class ApplicationFolder:
 
     @staticmethod
     def get_full_path(file_name):
-        return '/'.join([ApplicationFolder.get_path(),file_name])
+        return '/'.join([ApplicationFolder.get_path(), file_name])
 
 
 class Logger:
@@ -42,16 +44,17 @@ class Logger:
         self.file_name = ApplicationFolder.get_full_path(name)
         self.log_level = level
         self.log_event(Logger.INFO, '------------------Start New Session------------------')
-        self.log_event(Logger.INFO,'Running on OS' + platform.system())
+        self.log_event(Logger.INFO, 'Running on OS' + platform.system())
         self.log_event(Logger.INFO, 'Running in folder: ' + os.getcwd())
 
-    def log_event(self,level,msg):
-        if(self.log_level >= level):
+    def log_event(self, level, msg):
+        if self.log_level >= level:
             with open(self.file_name, 'a') as log_file:
                 log_file.write(msg + '\n')
                 log_file.close()
 
-logger = Logger('log.txt',Logger.SILENT)
+
+logger = Logger('log.txt', Logger.SILENT)
 
 
 class Zipper:
@@ -71,7 +74,7 @@ class Zipper:
         # ziph is zipfile handle
         for root, dirs, files in os.walk(self.pathName()):
             for file in files:
-                ziph.write(os.path.join(root, file),file)
+                ziph.write(os.path.join(root, file), file)
         ziph.close()
 
     def unzip(self, archive):
@@ -80,7 +83,8 @@ class Zipper:
             zip_ref.extractall(dir_name)
         return dir_name
 
-class ConfigFile():
+
+class ConfigFile:
 
     def __init__(self, params):
         self.params = params
@@ -91,7 +95,7 @@ class ConfigFile():
     def getFileName(self):
         return ""
 
-    def extract(self):
+    def extract(self, data):
         pass
 
     def getArchiveName(self):
@@ -112,17 +116,16 @@ class ConfigFile():
             print(error)
 
     def save(self):
-        output = '/'.join([self.getTargetDir(),self.getFileName()])
+        output = '/'.join([self.getTargetDir(), self.getFileName()])
         logger.log_event(Logger.DEBUG, 'save file: ' + output)
         with open(output, 'w') as jsonFile:
             json.dump(self.getConfig(), jsonFile, indent=2)
 
     def load(self):
-        input = '/'.join([self.params.path,self.getFileName()])
-        with open(input) as json_file:
+        input_path = '/'.join([self.params.path, self.getFileName()])
+        with open(input_path) as json_file:
             data = json.load(json_file)
             self.extract(data)
-
 
 
 class Global(ConfigFile):
@@ -135,10 +138,10 @@ class Global(ConfigFile):
                 "audienceModeBuildOnly": "non-children",
                 "orientation": "portrait",
                 "appBuildConfig": {
-                "admob": {
-                  "application": self.params.admob.appId
-                },
-                "google": {}
+                    "admob": {
+                      "application": self.params.admob.appId
+                    },
+                    "google": {}
                 }
               }
         return cfg
@@ -150,13 +153,12 @@ class Global(ConfigFile):
         self.params.admob.appId = data["appBuildConfig"]["admob"]["application"]
 
 
-
 class AppsFlyer(ConfigFile):
 
     def getConfig(self):
         return {
-                "appsFlyerKey":"8MAzUC3B2BHYVi2uYVHaSd",
-                "appsFlyerAppId":self.params.apple.appId
+                "appsFlyerKey": "8MAzUC3B2BHYVi2uYVHaSd",
+                "appsFlyerAppId": self.params.apple.appId
             }
 
     def getFileName(self):
@@ -169,31 +171,31 @@ class AppsFlyer(ConfigFile):
 class Analytics(ConfigFile):
 
     def getConfig(self):
-        cfg =  {
-                  "geoLocationServer": "ttplugins.ttpsdk.info",
-                  "firebase": {
-                    "googleAppId": self.params.firebase.appId,
-                    "senderId": self.getSenderId(),
-                    "clientId": self.params.firebase.clientId,
-                    "databaseURL": self.getDatabaseUrl(),
-                    "storageBucket": self.getStorageBucket(),
-                    "apiKey": self.params.firebase.apiKey,
-                    "projectId": self.params.firebase.projectId
-                  }
+        cfg = {
+                "geoLocationServer": "ttplugins.ttpsdk.info",
+                "firebase": {
+                  "googleAppId": self.params.firebase.appId,
+                  "senderId": self.getSenderId(),
+                  "clientId": self.params.firebase.clientId,
+                  "databaseURL": self.getDatabaseUrl(),
+                  "storageBucket": self.getStorageBucket(),
+                  "apiKey": self.params.firebase.apiKey,
+                  "projectId": self.params.firebase.projectId
                 }
+              }
         return cfg
 
     def getSenderId(self):
-        id = self.params.firebase.clientId.split('-')[0]
-        return id
+        value = self.params.firebase.clientId.split('-')[0]
+        return value
 
     def getStorageBucket(self):
-        id = '.'.join([self.params.firebase.projectId,'appspot.com'])
-        return id
+        value = '.'.join([self.params.firebase.projectId, 'appspot.com'])
+        return value
 
     def getDatabaseUrl(self):
-        id = "https://"+self.params.firebase.projectId+".firebaseio.com"
-        return id
+        value = "https://"+self.params.firebase.projectId+".firebaseio.com"
+        return value
 
     def getFileName(self):
         return "analytics.json"
@@ -226,7 +228,7 @@ class Banners(ConfigFile):
 class Interstitials(ConfigFile):
 
     def getConfig(self):
-        cfg = {"interstitialsAdMobKey":self.params.admob.interstitials}
+        cfg = {"interstitialsAdMobKey": self.params.admob.interstitials}
         return cfg
 
     def getFileName(self):
@@ -236,11 +238,10 @@ class Interstitials(ConfigFile):
         self.params.admob.interstitials = data["interstitialsAdMobKey"]
 
 
-
 class RewardedAds(ConfigFile):
 
     def getConfig(self):
-        cfg = {"rewardedAdsAdMobKey":self.params.admob.rewardedAds}
+        cfg = {"rewardedAdsAdMobKey": self.params.admob.rewardedAds}
         return cfg
 
     def getFileName(self):
@@ -281,9 +282,11 @@ class Params:
         self.firebase = Firebase()
         self.popups = Popups()
 
+
 class Apple:
     def __init__(self):
         self.appId = ""
+
 
 class Admob:
     def __init__(self):
@@ -292,12 +295,14 @@ class Admob:
         self.interstitials = ""
         self.rewardedAds = ""
 
+
 class Firebase:
     def __init__(self):
         self.appId = ""
         self.clientId = ""
         self.projectId = ""
         self.apiKey = ""
+
 
 class Popups:
     def __init__(self):
@@ -306,23 +311,23 @@ class Popups:
         self.sessionTime = {"1": 15}
         self.resetOnRV = {"1": False}
 
-    def setTimeBetween(self,str):
-        self.timeBetween = {"1": [int(str)]}
+    def setTimeBetween(self, value):
+        self.timeBetween = {"1": [int(value)]}
 
-    def setGameTime(self,str):
-        self.gameTime = {"1": int(str)}
+    def setGameTime(self, value):
+        self.gameTime = {"1": int(value)}
 
-    def setSessionTime(self,str):
-        self.sessionTime = {"1": int(str)}
+    def setSessionTime(self, value):
+        self.sessionTime = {"1": int(value)}
 
-    def setResetOnRV(self,str):
-        value = str == True
+    def setResetOnRV(self, toggle):
+        value = toggle is True
         self.resetOnRV = {"1": value}
 
 
-#Could have used PySide.QtGui.QFormLayout.addRow() or QGridLayout
-class LabelledInput():
-    def __init__(self,label,default=""):
+# Could have used PySide.QtGui.QFormLayout.addRow() or QGridLayout
+class LabelledInput:
+    def __init__(self, label, default=""):
         self.label = QLabel(label)
         self.value = QLineEdit(default)
         self.layout = QHBoxLayout()
@@ -335,9 +340,9 @@ class LabelledInput():
     def getValue(self):
         return self.value.text()
 
-    def setValue(self,input):
-        if isinstance(input, six.string_types):
-            self.value.setText(input)
+    def setValue(self, value):
+        if isinstance(value, six.string_types):
+            self.value.setText(value)
 
 
 class Form(QDialog):
@@ -357,35 +362,34 @@ class Form(QDialog):
         self.admobBanners = LabelledInput("Admob Banners")
         self.admobInterstitials = LabelledInput("Admob Interstitials")
         self.admobRewardedAds = LabelledInput("Admob Rewarded Ads")
-        self.popupsInterval = LabelledInput("Time Between Popups (sec)","25")
-        self.popupsGameTime = LabelledInput("Game time to first popup (sec)","25")
-        self.popupsSessionTime = LabelledInput("Session time to first popup (sec)","15")
-        self.popupsResetOnRV = LabelledInput("Reset on RV","False")
+        self.popupsInterval = LabelledInput("Time Between Popups (sec)", "25")
+        self.popupsGameTime = LabelledInput("Game time to first popup (sec)", "25")
+        self.popupsSessionTime = LabelledInput("Session time to first popup (sec)", "15")
+        self.popupsResetOnRV = LabelledInput("Reset on RV", "False")
         self.save = QPushButton("Save")
-
 
         # Set dialog layout
         layout = QVBoxLayout()
 
-        #Load Button
+        # Load Button
         layout.addWidget(self.load)
 
-        #Apple
+        # Apple
         layout.addLayout(self.appleId.getLayout())
 
-        #Firebase
+        # Firebase
         layout.addLayout(self.firebaseId.getLayout())
         layout.addLayout(self.firebaseClientId.getLayout())
         layout.addLayout(self.firebaseProjectId.getLayout())
         layout.addLayout(self.firebaseAPIKey.getLayout())
 
-        #Admob
+        # Admob
         layout.addLayout(self.admobId.getLayout())
         layout.addLayout(self.admobBanners.getLayout())
         layout.addLayout(self.admobInterstitials.getLayout())
         layout.addLayout(self.admobRewardedAds.getLayout())
 
-        #Popups
+        # Popups
         layout.addLayout(self.popupsInterval.getLayout())
         layout.addLayout(self.popupsGameTime.getLayout())
         layout.addLayout(self.popupsSessionTime.getLayout())
@@ -399,8 +403,8 @@ class Form(QDialog):
 
     def onLoad(self):
         zip_name = QFileDialog.getOpenFileName(self, 'Open file', './', "Zip files (*.zip)")
-        input = self.loadConfig(zip_name)
-        self.showConfig(input)
+        config_data = self.loadConfig(zip_name)
+        self.showConfig(config_data)
 
     def onSave(self):
         self.saveConfig(self.collectInput())
@@ -408,13 +412,13 @@ class Form(QDialog):
         msgBox.setText("Configuration saved")
         msgBox.exec_()
 
-    def loadConfig(self,input):
+    def loadConfig(self, archive):
         params = Params()
 
-        #Unzip
-        params.path = Zipper("").unzip(input[0])
+        # Unzip
+        params.path = Zipper("").unzip(archive[0])
 
-        #Load files
+        # Load files
         Global(params).load()
         AppsFlyer(params).load()
         Analytics(params).load()
@@ -425,7 +429,7 @@ class Form(QDialog):
 
         return params
 
-    def showConfig(self,params):
+    def showConfig(self, params):
         self.appleId.setValue(params.apple.appId)
         self.firebaseId.setValue(params.firebase.appId)
         self.firebaseClientId.setValue(params.firebase.clientId)
@@ -439,7 +443,6 @@ class Form(QDialog):
         self.popupsGameTime.setValue(params.popups.gameTime)
         self.popupsSessionTime.setValue(params.popups.sessionTime)
         self.popupsResetOnRV.setValue(params.popups.resetOnRV)
-
 
     def collectInput(self):
         p = Params()
@@ -458,8 +461,8 @@ class Form(QDialog):
         p.popups.setResetOnRV(self.popupsResetOnRV.getValue())
         return p
 
-    def saveConfig(self,params):
-        #params = self.collectInput()
+    def saveConfig(self, params):
+        # params = self.collectInput()
         Global(params).save()
         AppsFlyer(params).save()
         Analytics(params).save()
@@ -470,7 +473,6 @@ class Form(QDialog):
         Zipper(params.apple.appId).zipdir()
 
 
-
 if __name__ == '__main__':
     # Create the Qt Application
     app = QApplication(sys.argv)
@@ -479,5 +481,3 @@ if __name__ == '__main__':
     form.show()
     # Run the main Qt loop
     sys.exit(app.exec_())
-
-
