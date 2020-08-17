@@ -201,6 +201,23 @@ class CrashTool(ConfigFile):
         self.params.general.hockeyAppKey = data.get("hockeyAppKey", "")
 
 
+class Privacy(ConfigFile):
+
+    def getConfig(self):
+        return {
+                "consentFormVersion": "7.1",
+                "consentFormURL": "https://promo-images.ttpsdk.info/privacyForms/consent-form/crazylabs/7.1/skin.zip",
+                "privacySettingsURL": "https://promo-images.ttpsdk.info/privacyForms/privacy-settings/crazylabs/7.1/skin.zip",
+                "useTTPGDPRPopups": True
+            }
+
+    def getFileName(self):
+        return "privacySettings.json"
+
+    def extract(self, data):
+        pass
+
+
 class Analytics(ConfigFile):
 
     def getConfig(self):
@@ -536,6 +553,7 @@ class Form(QDialog):
         Interstitials(params).load()
         RewardedAds(params).load()
         PopupsMgr(params).load()
+        Privacy(params).load()
 
         return params
 
@@ -587,6 +605,7 @@ class Form(QDialog):
         Interstitials(params).save()
         RewardedAds(params).save()
         PopupsMgr(params).save()
+        Privacy(params).save()
         Zipper(params.general.appId).zipdir()
 
 
