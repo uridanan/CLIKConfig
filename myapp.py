@@ -7,27 +7,31 @@ import platform
 from PySide2.QtWidgets import (QLabel, QLineEdit, QPushButton, QApplication, QVBoxLayout, QHBoxLayout, QDialog,
                                QMessageBox, QFileDialog, QFormLayout)
 
-# TODO: GP - Add bundle ID
-# TODO: GP - Add test: True/False
 # TODO: GP - Add hockeyApp key
 # TODO: GP - Add level to first popup and first popup at session
 # TODO: GP - Add privacy settings
 # TODO: GP - AppsFlyer does not need general app ID
-# TODO: GP - Add toggle iOS / Android
 # TODO: MacOS - control the output folder?
 # TODO: MacOS - why can't the noconsole option write the files?
 # TODO: Separate fields into sections
-# TODO: Use Int field and bool toggles
+# TODO: Use Int field
 # TODO: add to CL HC Product github
 # TODO: create 2 button toggle
+# TODO: GP - Add toggle iOS / Android
 
 
+print 'Number of arguments:', len(sys.argv), 'arguments.'
+print 'Argument List:', str(sys.argv)
 class ApplicationFolder:
     MACOS = 'Darwin'
 
     @staticmethod
     def get_path():
-        if platform.system() == ApplicationFolder.MACOS:
+        debug_mode = False
+        if len(sys.argv) > 1 and sys.argv[1] == "debug":
+            debug_mode = True
+
+        if platform.system() == ApplicationFolder.MACOS and not debug_mode:
             return os.getcwd() + '/Desktop/CLIK Configurator'
         return os.getcwd()
 
@@ -55,7 +59,7 @@ class Logger:
                 log_file.close()
 
 
-logger = Logger('log.txt', Logger.SILENT)
+logger = Logger('log.txt', Logger.DEBUG)
 
 
 class Zipper:
@@ -100,7 +104,10 @@ class ConfigFile:
         pass
 
     def getArchiveName(self):
-        return "CLIKConfig-" + self.params.general.appId
+        suffix = self.params.general.bundleId
+        if self.params.general.appId is not None and len(self.params.general.appId) > 0:
+            suffix = self.params.general.appId
+        return "CLIKConfig-" + suffix
 
     def getTargetDir(self):
         path = ApplicationFolder.get_full_path(self.getArchiveName())
@@ -132,8 +139,18 @@ class ConfigFile:
 class Global(ConfigFile):
 
     def getConfig(self):
+        mode = ""
+        if self.params.general.useTestKeys:
+            mode = "test"
+
+        store = "google"
+        if self.params.general.appId is not None and len(self.params.general.appId) > 0:
+            store = "apple"
+
         cfg = {
-                "store": "apple",
+                "bundleId": self.params.general.bundleId,
+                "mode": mode,
+                "store": store,
                 "gameEngine": "unity",
                 "appId": self.params.general.appId,
                 "audienceModeBuildOnly": "non-children",
@@ -152,6 +169,8 @@ class Global(ConfigFile):
 
     def extract(self, data):
         self.params.admob.appId = data["appBuildConfig"]["admob"]["application"]
+        self.params.general.bundleId = data["bundleId"]
+        self.params.general.useTestKeys = data["mode"] == "test"
 
 
 class AppsFlyer(ConfigFile):
@@ -163,10 +182,10 @@ class AppsFlyer(ConfigFile):
             }
 
     def getFileName(self):
-        return "apsflyer.json"
+        return "appsflyer.json"
 
     def extract(self, data):
-        self.params.general.appId = data["appsFlyerAppId"]
+        self.params.general.appId = data.get("appsFlyerAppId", "")
 
 
 class Analytics(ConfigFile):
@@ -272,7 +291,7 @@ class PopupsMgr(ConfigFile):
         self.params.popups.gameTime = data["gameTimeToFirstPopupBySession"]
         self.params.popups.sessionTime = data["sessionTimeToFirstPopupBySession"]
         self.params.popups.timeBetween = data["popupsIntervalsBySession"]
-        self.params.popups.resetOnRV = data["resetPopupTimerOnRVBySession"]
+        self.params.popups.resetOnRV = data["resetPopupTimerOnRVBySession"] is True
 
 
 class Params:
@@ -505,7 +524,7 @@ class Form(QDialog):
 
     def showConfig(self, params):
         self.bundleId.setValue(params.general.bundleId)
-        self.useTestKeys.setChecked(params.general.useTestKeys)
+        self.useTestKeys.getWidget().setChecked(params.general.useTestKeys)
         self.appleId.setValue(params.general.appId)
         self.firebaseId.setValue(params.firebase.appId)
         self.firebaseClientId.setValue(params.firebase.clientId)
@@ -518,11 +537,11 @@ class Form(QDialog):
         self.popupsInterval.setValue(params.popups.timeBetween)
         self.popupsGameTime.setValue(params.popups.gameTime)
         self.popupsSessionTime.setValue(params.popups.sessionTime)
-        self.popupsResetOnRV.getWidget.setChecked(params.popups.resetOnRV)
+        self.popupsResetOnRV.getWidget().setChecked(params.popups.resetOnRV)
 
     def collectInput(self):
         p = Params()
-        p.general.bundleId = self.appleId.getValue()
+        p.general.bundleId = self.bundleId.getValue()
         p.general.useTestKeys = self.useTestKeys.getWidget().isChecked()
         p.general.appId = self.appleId.getValue()
         p.firebase.appId = self.firebaseId.getValue()
