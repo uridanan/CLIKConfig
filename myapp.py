@@ -7,7 +7,6 @@ import platform
 from PySide2.QtWidgets import (QLabel, QLineEdit, QPushButton, QApplication, QVBoxLayout, QHBoxLayout, QDialog,
                                QMessageBox, QFileDialog, QFormLayout)
 
-# TODO: GP - Add privacy settings
 # TODO: GP - Add level to first popup and first popup at session
 # TODO: GP - AppsFlyer does not need general app ID
 # TODO: MacOS - control the output folder?
@@ -19,8 +18,6 @@ from PySide2.QtWidgets import (QLabel, QLineEdit, QPushButton, QApplication, QVB
 # TODO: GP - Add toggle iOS / Android
 
 
-print 'Number of arguments:', len(sys.argv), 'arguments.'
-print 'Argument List:', str(sys.argv)
 class ApplicationFolder:
     MACOS = 'Darwin'
 
@@ -205,11 +202,11 @@ class Privacy(ConfigFile):
 
     def getConfig(self):
         return {
-                "consentFormVersion": "7.1",
-                "consentFormURL": "https://promo-images.ttpsdk.info/privacyForms/consent-form/crazylabs/7.1/skin.zip",
-                "privacySettingsURL": "https://promo-images.ttpsdk.info/privacyForms/privacy-settings/crazylabs/7.1/skin.zip",
-                "useTTPGDPRPopups": True
-            }
+            "consentFormVersion": "7.1",
+            "consentFormURL": "https://promo-images.ttpsdk.info/privacyForms/consent-form/crazylabs/7.1/skin.zip",
+            "privacySettingsURL": "https://promo-images.ttpsdk.info/privacyForms/privacy-settings/crazylabs/7.1/skin.zip",
+            "useTTPGDPRPopups": True
+        }
 
     def getFileName(self):
         return "privacySettings.json"
@@ -423,10 +420,12 @@ class LabelledInput:
         if isinstance(value, six.string_types):
             self.value.setText(value)
 
+
 class ToggleState:
     def __init__(self, color, text):
         self.color = color
         self.text = text
+
 
 class Toggle:
     def __init__(self, checked_state, unchecked_state, is_default_checked):
@@ -450,7 +449,7 @@ class Toggle:
                QPushButton:checked{background-color: " + checked_state.color + ";} \
                QPushButton:focus{border:none; }")
         self.widget.setChecked(is_default_checked)
-        self.widget.toggled.connect(lambda:self.onToggle(self.widget))
+        self.widget.toggled.connect(lambda: self.onToggle(self.widget))
         self.widget.isChecked()
 
     def getWidget(self):
@@ -473,7 +472,7 @@ class Form(QDialog):
         self.load = QPushButton("Load")
         self.bundleId = LabelledInput("Bundle Id")
         self.useTestKeys = LabelledWidget("Use Test Keys",
-                        Toggle(ToggleState("blue", "YES"), ToggleState("green", "NO"), False).getWidget())
+            Toggle(ToggleState("blue", "YES"), ToggleState("green", "NO"), False).getWidget())
         self.appleId = LabelledInput("Apple App Id")
         self.testMode = LabelledInput("Using Test Keys")
         self.hockeyAppKey = LabelledInput("HockeyApp key")
@@ -488,7 +487,8 @@ class Form(QDialog):
         self.popupsInterval = LabelledInput("Time Between Popups (sec)", "25")
         self.popupsGameTime = LabelledInput("Game time to first popup (sec)", "25")
         self.popupsSessionTime = LabelledInput("Session time to first popup (sec)", "15")
-        self.popupsResetOnRV = LabelledWidget("Reset on RV", Toggle(ToggleState("blue", "YES"), ToggleState("green", "NO"), False).getWidget())
+        self.popupsResetOnRV = LabelledWidget("Reset on RV",
+              Toggle(ToggleState("blue", "YES"), ToggleState("green", "NO"), False).getWidget())
         self.save = QPushButton("Save")
 
         # Set dialog layout
