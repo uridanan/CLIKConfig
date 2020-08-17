@@ -7,9 +7,8 @@ import platform
 from PySide2.QtWidgets import (QLabel, QLineEdit, QPushButton, QApplication, QVBoxLayout, QHBoxLayout, QDialog,
                                QMessageBox, QFileDialog, QFormLayout)
 
-# TODO: GP - Add hockeyApp key
-# TODO: GP - Add level to first popup and first popup at session
 # TODO: GP - Add privacy settings
+# TODO: GP - Add level to first popup and first popup at session
 # TODO: GP - AppsFlyer does not need general app ID
 # TODO: MacOS - control the output folder?
 # TODO: MacOS - why can't the noconsole option write the files?
@@ -188,6 +187,20 @@ class AppsFlyer(ConfigFile):
         self.params.general.appId = data.get("appsFlyerAppId", "")
 
 
+class CrashTool(ConfigFile):
+
+    def getConfig(self):
+        return {
+                "hockeyAppKey": self.params.general.hockeyAppKey
+            }
+
+    def getFileName(self):
+        return "crashMonitoringTool.json"
+
+    def extract(self, data):
+        self.params.general.hockeyAppKey = data.get("hockeyAppKey", "")
+
+
 class Analytics(ConfigFile):
 
     def getConfig(self):
@@ -308,6 +321,7 @@ class General:
         self.appId = ""
         self.bundleId = ""
         self.useTestKeys = False
+        self.hockeyAppKey = ""
 
 
 class Admob:
@@ -445,6 +459,7 @@ class Form(QDialog):
                         Toggle(ToggleState("blue", "YES"), ToggleState("green", "NO"), False).getWidget())
         self.appleId = LabelledInput("Apple App Id")
         self.testMode = LabelledInput("Using Test Keys")
+        self.hockeyAppKey = LabelledInput("HockeyApp key")
         self.firebaseId = LabelledInput("Firebase App Id")
         self.firebaseClientId = LabelledInput("Firebase Client Id")
         self.firebaseProjectId = LabelledInput("Firebase Project Id")
@@ -469,6 +484,7 @@ class Form(QDialog):
         layout.addLayout(self.bundleId.getLayout())
         layout.addLayout(self.useTestKeys.getLayout())
         layout.addLayout(self.appleId.getLayout())
+        layout.addLayout(self.hockeyAppKey.getLayout())
 
         # Firebase
         layout.addLayout(self.firebaseId.getLayout())
@@ -514,6 +530,7 @@ class Form(QDialog):
         # Load files
         Global(params).load()
         AppsFlyer(params).load()
+        CrashTool(params).load()
         Analytics(params).load()
         Banners(params).load()
         Interstitials(params).load()
@@ -526,6 +543,7 @@ class Form(QDialog):
         self.bundleId.setValue(params.general.bundleId)
         self.useTestKeys.getWidget().setChecked(params.general.useTestKeys)
         self.appleId.setValue(params.general.appId)
+        self.hockeyAppKey.setValue(params.general.hockeyAppKey)
         self.firebaseId.setValue(params.firebase.appId)
         self.firebaseClientId.setValue(params.firebase.clientId)
         self.firebaseProjectId.setValue(params.firebase.projectId)
@@ -544,6 +562,7 @@ class Form(QDialog):
         p.general.bundleId = self.bundleId.getValue()
         p.general.useTestKeys = self.useTestKeys.getWidget().isChecked()
         p.general.appId = self.appleId.getValue()
+        p.general.hockeyAppKey = self.hockeyAppKey.getValue()
         p.firebase.appId = self.firebaseId.getValue()
         p.firebase.clientId = self.firebaseClientId.getValue()
         p.firebase.projectId = self.firebaseProjectId.getValue()
@@ -562,6 +581,7 @@ class Form(QDialog):
         # params = self.collectInput()
         Global(params).save()
         AppsFlyer(params).save()
+        CrashTool(params).save()
         Analytics(params).save()
         Banners(params).save()
         Interstitials(params).save()
