@@ -7,6 +7,7 @@ import platform
 from PySide2.QtWidgets import (QLabel, QLineEdit, QPushButton, QApplication, QVBoxLayout, QHBoxLayout, QDialog,
                                QMessageBox, QFileDialog, QFormLayout, QFrame)
 
+# TODO: Refactor into smaller files
 # TODO: GP - AppsFlyer does not need general app ID but we can leave the field with an empty value
 # TODO: MacOS - control the output folder?
 # TODO: MacOS - why can't the noconsole option write the files?
@@ -524,8 +525,8 @@ class Form(QDialog):
         layout.addWidget(Separator().getWidget())
 
         layout.addLayout(self.bundleId.getLayout())
-        layout.addLayout(self.useTestKeys.getLayout())
         layout.addLayout(self.appleId.getLayout())
+        layout.addLayout(self.useTestKeys.getLayout())
         layout.addWidget(Separator().getWidget())
 
         layout.addLayout(self.hockeyAppKey.getLayout())
