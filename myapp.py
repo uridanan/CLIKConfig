@@ -5,17 +5,16 @@ import json
 import six
 import platform
 from PySide2.QtWidgets import (QLabel, QLineEdit, QPushButton, QApplication, QVBoxLayout, QHBoxLayout, QDialog,
-                               QMessageBox, QFileDialog, QFormLayout)
+                               QMessageBox, QFileDialog, QFormLayout, QFrame)
 
-# TODO: GP - Add level to first popup and first popup at session
-# TODO: GP - AppsFlyer does not need general app ID
+# TODO: GP - AppsFlyer does not need general app ID but we can leave the field with an empty value
 # TODO: MacOS - control the output folder?
 # TODO: MacOS - why can't the noconsole option write the files?
-# TODO: Separate fields into sections
-# TODO: Use Int field
+# TODO: Separate fields into sections using groupboxes
+# TODO: Use Int fields
 # TODO: add to CL HC Product github
 # TODO: create 2 button toggle
-# TODO: GP - Add toggle iOS / Android
+# TODO: GP - Add toggle iOS / Android + validations
 
 
 class ApplicationFolder:
@@ -472,6 +471,16 @@ class Toggle:
         instance.setText(text)
 
 
+class Separator:
+    def __init__(self):
+        self.widget = QFrame()
+        self.widget.setFrameShape(QFrame.HLine)
+        self.widget.setFrameShadow(QFrame.Sunken)
+
+    def getWidget(self):
+        return self.widget
+
+
 class Form(QDialog):
 
     def __init__(self, parent=None):
@@ -480,6 +489,7 @@ class Form(QDialog):
 
         # Create widgets
         self.load = QPushButton("Load")
+        self.store = QLabel("If no Apple ID is provided, store is Google\nIf Apple Id is provided, store is Apple")
         self.bundleId = LabelledInput("Bundle Id")
         self.useTestKeys = LabelledWidget("Use Test Keys",
             Toggle(ToggleState("blue", "YES"), ToggleState("green", "NO"), False).getWidget())
@@ -510,22 +520,30 @@ class Form(QDialog):
         layout.addWidget(self.load)
 
         # General
+        layout.addWidget(self.store)
+        layout.addWidget(Separator().getWidget())
+
         layout.addLayout(self.bundleId.getLayout())
         layout.addLayout(self.useTestKeys.getLayout())
         layout.addLayout(self.appleId.getLayout())
+        layout.addWidget(Separator().getWidget())
+
         layout.addLayout(self.hockeyAppKey.getLayout())
+        layout.addWidget(Separator().getWidget())
 
         # Firebase
         layout.addLayout(self.firebaseId.getLayout())
         layout.addLayout(self.firebaseClientId.getLayout())
         layout.addLayout(self.firebaseProjectId.getLayout())
         layout.addLayout(self.firebaseAPIKey.getLayout())
+        layout.addWidget(Separator().getWidget())
 
         # Admob
         layout.addLayout(self.admobId.getLayout())
         layout.addLayout(self.admobBanners.getLayout())
         layout.addLayout(self.admobInterstitials.getLayout())
         layout.addLayout(self.admobRewardedAds.getLayout())
+        layout.addWidget(Separator().getWidget())
 
         # Popups
         layout.addLayout(self.popupsInterval.getLayout())
