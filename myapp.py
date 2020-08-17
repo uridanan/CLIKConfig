@@ -306,8 +306,8 @@ class PopupsMgr(ConfigFile):
                   "gameTimeToFirstPopupBySession": self.params.popups.gameTime,
                   "sessionTimeToFirstPopupBySession": self.params.popups.sessionTime,
                   "resetPopupTimerOnRVBySession": self.params.popups.resetOnRV,
-                  "levelToFirstPopup": 0,
-                  "firstPopupAtSession": 1
+                  "levelToFirstPopup": self.params.popups.firstLevel,
+                  "firstPopupAtSession": self.params.popups.firstSession
               }
         return cfg
 
@@ -319,6 +319,8 @@ class PopupsMgr(ConfigFile):
         self.params.popups.sessionTime = data["sessionTimeToFirstPopupBySession"]
         self.params.popups.timeBetween = data["popupsIntervalsBySession"]
         self.params.popups.resetOnRV = data["resetPopupTimerOnRVBySession"] is True
+        self.params.popups.firstLevel = data.get("levelToFirstPopup", 0)
+        self.params.popups.firstSession = data.get("firstPopupAtSession", 1)
 
 
 class Params:
@@ -360,6 +362,8 @@ class Popups:
         self.gameTime = {"1": 25}
         self.sessionTime = {"1": 15}
         self.resetOnRV = {"1": False}
+        self.firstLevel = 0
+        self.firstSession = 1
 
     def setTimeBetween(self, value):
         self.timeBetween = {"1": [int(value)]}
@@ -373,6 +377,12 @@ class Popups:
     def setResetOnRV(self, toggle):
         value = toggle is True
         self.resetOnRV = {"1": value}
+
+    def setFirstLevel(self, value):
+        self.firstLevel = value
+
+    def setFirstSession(self, value):
+        self.firstSession = value
 
 
 # Could have used PySide.QtGui.QFormLayout.addRow() or QGridLayout
@@ -487,6 +497,8 @@ class Form(QDialog):
         self.popupsInterval = LabelledInput("Time Between Popups (sec)", "25")
         self.popupsGameTime = LabelledInput("Game time to first popup (sec)", "25")
         self.popupsSessionTime = LabelledInput("Session time to first popup (sec)", "15")
+        self.popupsFirstSession = LabelledInput("First popup in Session #", "1")
+        self.popupsFirstLevel = LabelledInput("First popup in Level #", "0")
         self.popupsResetOnRV = LabelledWidget("Reset on RV",
               Toggle(ToggleState("blue", "YES"), ToggleState("green", "NO"), False).getWidget())
         self.save = QPushButton("Save")
@@ -519,6 +531,8 @@ class Form(QDialog):
         layout.addLayout(self.popupsInterval.getLayout())
         layout.addLayout(self.popupsGameTime.getLayout())
         layout.addLayout(self.popupsSessionTime.getLayout())
+        layout.addLayout(self.popupsFirstSession.getLayout())
+        layout.addLayout(self.popupsFirstLevel.getLayout())
         layout.addLayout(self.popupsResetOnRV.getLayout())
 
         layout.addWidget(self.save)
@@ -573,6 +587,8 @@ class Form(QDialog):
         self.popupsInterval.setValue(params.popups.timeBetween)
         self.popupsGameTime.setValue(params.popups.gameTime)
         self.popupsSessionTime.setValue(params.popups.sessionTime)
+        self.popupsFirstSession.setValue(params.popups.firstSession)
+        self.popupsFirstLevel.setValue(params.popups.firstLevel)
         self.popupsResetOnRV.getWidget().setChecked(params.popups.resetOnRV)
 
     def collectInput(self):
@@ -592,7 +608,10 @@ class Form(QDialog):
         p.popups.setTimeBetween(self.popupsInterval.getValue())
         p.popups.setGameTime(self.popupsGameTime.getValue())
         p.popups.setSessionTime(self.popupsSessionTime.getValue())
+        p.popups.setFirstSession(self.popupsFirstSession.getValue())
+        p.popups.setFirstLevel(self.popupsFirstLevel.getValue())
         p.popups.setResetOnRV(self.popupsResetOnRV.getWidget().isChecked())
+
         return p
 
     def saveConfig(self, params):
