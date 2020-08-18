@@ -8,6 +8,7 @@ from PySide2.QtWidgets import (QLabel, QLineEdit, QPushButton, QApplication, QVB
                                QMessageBox, QFileDialog, QFormLayout, QFrame)
 
 # TODO: Refactor into smaller files
+# TODO: Refactor - getArchiveName belongs in Params, not in ConfigFile
 # TODO: GP - AppsFlyer does not need general app ID but we can leave the field with an empty value
 # TODO: MacOS - control the output folder?
 # TODO: MacOS - why can't the noconsole option write the files?
@@ -55,13 +56,12 @@ class Logger:
                 log_file.close()
 
 
-logger = Logger('log.txt', Logger.DEBUG)
+logger = Logger('log.txt', Logger.SILENT)
 
 
 class Zipper:
-    def __init__(self, app_id):
-        self.appId = app_id
-        self.archive = "CLIKConfig-" + self.appId
+    def __init__(self, archive):
+        self.archive = archive
         self.zip_name = self.archive + '.zip'
 
     def pathName(self):
@@ -635,7 +635,8 @@ class Form(QDialog):
 
     def saveConfig(self, params):
         # params = self.collectInput()
-        Global(params).save()
+        global_params = Global(params)
+        global_params.save()
         AppsFlyer(params).save()
         CrashTool(params).save()
         Analytics(params).save()
@@ -644,7 +645,7 @@ class Form(QDialog):
         RewardedAds(params).save()
         PopupsMgr(params).save()
         Privacy(params).save()
-        Zipper(params.general.appId).zipdir()
+        Zipper(global_params.getArchiveName()).zipdir()
 
 
 if __name__ == '__main__':
