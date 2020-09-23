@@ -178,7 +178,7 @@ class AppsFlyer(ConfigFile):
             }
 
     def getFileName(self):
-        return "appsflyer.json"
+        return "appsFlyer.json"
 
     def extract(self, data):
         self.params.general.appId = data.get("appsFlyerAppId", "")
@@ -292,7 +292,7 @@ class RewardedAds(ConfigFile):
         return cfg
 
     def getFileName(self):
-        return "rewardedads.json"
+        return "rewardedAds.json"
 
     def extract(self, data):
         self.params.admob.rewardedAds = data["rewardedAdsAdMobKey"]
@@ -312,7 +312,7 @@ class PopupsMgr(ConfigFile):
         return cfg
 
     def getFileName(self):
-        return "popupsmgr.json"
+        return "popupsMgr.json"
 
     def extract(self, data):
         self.params.popups.gameTime = data["gameTimeToFirstPopupBySession"]
