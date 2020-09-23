@@ -341,11 +341,23 @@ class General:
 
 
 class Admob:
+    defaultAppId = "ca-app-pub-3940256099942544~3347511713"
+
     def __init__(self):
-        self.appId = ""
+        self.appId = self.defaultAppId
         self.banners = ""
         self.interstitials = ""
         self.rewardedAds = ""
+
+    def setAppId(self, appId):
+        if appId is not None and len(appId) > 0:
+            self.appId = appId
+
+    def getAppId(self):
+        if self.appId == self.defaultAppId:
+            return ""
+        else:
+            return self.appId
 
 
 class Firebase:
@@ -599,7 +611,8 @@ class Form(QDialog):
         self.firebaseClientId.setValue(params.firebase.clientId)
         self.firebaseProjectId.setValue(params.firebase.projectId)
         self.firebaseAPIKey.setValue(params.firebase.apiKey)
-        self.admobId.setValue(params.admob.appId)
+        #self.admobId.setValue(params.admob.appId)
+        self.admobId.setValue(params.admob.getAppId())
         self.admobBanners.setValue(params.admob.banners)
         self.admobInterstitials.setValue(params.admob.interstitials)
         self.admobRewardedAds.setValue(params.admob.rewardedAds)
@@ -620,7 +633,8 @@ class Form(QDialog):
         p.firebase.clientId = self.firebaseClientId.getValue()
         p.firebase.projectId = self.firebaseProjectId.getValue()
         p.firebase.apiKey = self.firebaseAPIKey.getValue()
-        p.admob.appId = self.admobId.getValue()
+        #p.admob.appId = self.admobId.getValue()
+        p.admob.setAppId(self.admobId.getValue())
         p.admob.banners = self.admobBanners.getValue()
         p.admob.interstitials = self.admobInterstitials.getValue()
         p.admob.rewardedAds = self.admobRewardedAds.getValue()
